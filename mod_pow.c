@@ -18,7 +18,7 @@ int mod_pow_recursive(int x, long y, int m)
     }
 }
     
-int mod_pow(ull x, ull y, ull m)
+ull mod_pow(ull x, ull y, ull m)
 {
     ull ans = 1;
     while (y)

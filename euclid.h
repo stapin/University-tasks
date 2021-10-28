@@ -16,6 +16,6 @@ int mul_inv(int a, int m);
 
 int lcm(const int *a, int n);
 typedef unsigned long long ull;
-int mod(ull x, ull m);
+ull mod(ull x, ull m);
 
 #endif

@@ -133,7 +133,7 @@ int mul_inv(int a, int m)
     return x;
 }
 
-int mod(ull x, ull m)
+ull mod(ull x, ull m)
 {
     if (x >= 0) return x % m;
     else return m + (x % m);
