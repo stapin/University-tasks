@@ -64,17 +64,19 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
         {
             temp = n1->number[n1->length - i] + n2->number[n2->length - i] + rem;
             result->number[result->length - i] = temp & 255;
-            rem = temp << 8;
+            rem = temp >> 8;
         }
         else if ((int)n1->length - i + 1 > 0)
         {
-            result->number[result->length - i] = n1->number[n1->length - i] + rem;
-            rem = 0;
+            temp = n1->number[n1->length - i] + rem;
+            result->number[result->length - i] = temp & 255;
+            rem = temp >> 8;
         }
         else if ((int)n2->length - i + 1 > 0)
         {
-            result->number[result->length - i] = n2->number[n2->length - i] + rem;
-            rem = 0;
+            temp = n2->number[n2->length - i] + rem;
+            result->number[result->length - i] = temp & 255;
+            rem = temp >> 8;
         }
         else if (rem)
         {
@@ -300,8 +302,8 @@ int main()
     big_int *n1 = get_big_int("100000000000001");
     big_int *n2 = get_big_int("1000000001");
 
-    big_int *n3 = get_big_int_10("1");
-    big_int *n4 = get_big_int_10("1999999999");
+    big_int *n3 = get_big_int_10("3000000000020");
+    big_int *n4 = get_big_int_10("2000089999999");
     big_int *res = big_int_add(n3, n4);
     print_big_int2(n4);
     printf("\n");
