@@ -50,7 +50,7 @@ void print_big_int2(const big_int *n)
 }
 
 
-big_int *big_int_add(big_int *n1, big_int *n2)
+big_int *big_int_add(const big_int *n1, const big_int *n2)
 {
     big_int *result = malloc(sizeof(big_int));
     int temp = 0;
@@ -60,18 +60,18 @@ big_int *big_int_add(big_int *n1, big_int *n2)
     result->number = malloc(result->length);
     for (int i = 1; i <= result->length; i++)
     {
-        if ((n1->length - i + 1) && (n2->length - i + 1))
+        if ( ((int)n1->length - i + 1 > 0) && ((int)n2->length - i + 1 > 0) )
         {
             temp = n1->number[n1->length - i] + n2->number[n2->length - i] + rem;
             result->number[result->length - i] = temp & 255;
             rem = temp << 8;
         }
-        else if (n1->length - i - 1)
+        else if ((int)n1->length - i + 1 > 0)
         {
             result->number[result->length - i] = n1->number[n1->length - i] + rem;
             rem = 0;
         }
-        else if (n2->length - i - 1)
+        else if ((int)n2->length - i + 1 > 0)
         {
             result->number[result->length - i] = n2->number[n2->length - i] + rem;
             rem = 0;
@@ -92,7 +92,7 @@ big_int *big_int_add(big_int *n1, big_int *n2)
 
 // n1 - n2; n1, n2 >= 0;
 // if n2 > n1 returns 0;
-big_int *big_int_sub(big_int *n1, big_int *n2)
+big_int *big_int_sub(const big_int *n1, const big_int *n2)
 {
     if (n1->length < n2->length) return 0;
     int diff = n1->length - n2->length;
@@ -256,20 +256,63 @@ char *from_2_to_10(const char *bin_number)
     return result;
 }
 
+char *big_int_get_bin(const big_int *n)
+{
+    short flag = 0;
+    char *result = malloc(n->length * 8 + 1);
+    for (int i = 0; i < n->length * 8 + 1; i++)
+    {
+        result[i] = '0';
+    }
+    int ind = 0;
+    for (int i = 0; i < n->length; i++)
+    {
+        for (int j = 7; j >= 0; j--)
+        {
+            if ((n->number[i] & (1 << j)) && (!flag))
+            {
+                flag = 1;
+                ind = j;
+            }
+            if (flag) 
+            {
+                result[i * 8 + ind - j] = n->number[i] & (1 << j) ? '1' : '0';
+            }
+        }
+    }
+    result = realloc(result, n->length * 8 - (7 - ind) + 1);
+    result[n->length * 8 - (7 - ind)] = '\0';
+    return result;
+}
+
+void print_big_int_10(const big_int *n)
+{
+    char *result = big_int_get_bin(n);
+    result = from_2_to_10(result);
+    for (int i = 0; i < strlen(result); i++) 
+        printf("%c", result[i]);
+}
 
 
 int main()
 {
     big_int *a = get_big_int("001100011000000110000001");
-    big_int *n1 = get_big_int("1100001");
-    big_int *n2 = get_big_int("1000001");
+    big_int *n1 = get_big_int("100000000000001");
+    big_int *n2 = get_big_int("1000000001");
 
-    big_int *n3 = get_big_int_10("1000000000000000000008");
-    print_big_int2(n3);
+    big_int *n3 = get_big_int_10("1");
+    big_int *n4 = get_big_int_10("1999999999");
+    big_int *res = big_int_add(n3, n4);
+    print_big_int2(n4);
+    printf("\n");
+    print_big_int2(res);
+    printf("\n");
+    print_big_int_10(res);
 
-    char n10[] = "000001";
-    char *new2 = from_2_to_10(from_10_to_2(n10));
-    //printf("->%d\n", sizeof(new2));
-    for (int i = 0; i < strlen(new2); i++) printf("%c", new2[i]);
+    // char *n4 = big_int_get_bin(n3);
+    // for (int i = 0; i < strlen(n4); i++) printf("%c", n4[i]);
+    // char n10[] = "000001";
+    // char *new2 = from_2_to_10(from_10_to_2(n10));
+    // for (int i = 0; i < strlen(new2); i++) printf("%c", new2[i]);
     return 0;
 }
