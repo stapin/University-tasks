@@ -35,17 +35,6 @@ big_int *get_big_int(const char *bin_number)
     return ans;
 }
 
-void print_big_int(const big_int *n)
-{
-    for (int i = n->length - 1; i >= 0; i--)
-    {
-        for (int j = 7; j >= 0; j--)
-        {
-            printf("%d", n->number[i] & (1 << j) ? 1 : 0);
-        }
-        printf("\n");
-    }
-}
 
 void print_big_int2(const big_int *n)
 {
@@ -140,23 +129,147 @@ big_int *big_int_sub(big_int *n1, big_int *n2)
     return result;
 }
 
-char *big_int_print_10()
+char *from_10_to_2(const char *number)
 {
+    int len = strlen(number);
+    char *num = malloc(len);
+    for (size_t i = 0; i < len; i++)
+    {
+        num[i] = number[i];
+    }
+    
+    char *result = malloc(len*4 + 1);
+    result[len * 4] = '\0';
+    for (int i = 0; i < len * 4; i++) result[i] = '0';
+    int it = 1;
+    short digit;
+    short rem = 0;
+    unsigned char flag = 0;
+    while (1)
+    {
+        flag = 0;
+        if ((num[len - 1] - '0') & 1) result[len*4 - it] = '1';
+        else result[len*4 - it] = '0';
+        ++it;
+        // n //= 2;
+        for (int i = 0; i < len; i++)
+        {
+            digit = num[i] - '0' + rem;
+            if (digit) flag = 1;
+            if (!flag) continue;
+            if (digit & 1)
+            {
+                digit >>= 1;
+                rem = 10;
+            }
+            else
+            {
+                digit >>= 1;
+                rem = 0;
+            }
+            num[i] = digit + '0';
+            
+        }
+        rem = 0;
+        if (!flag) break;
+    }
+    // delete '0' form beggining of number.
+    it = 0;
+    for (int i = 0; i < len * 4; i++)
+    {
+        if (result[i] - '0') 
+        {
+            it = i;
+            break;
+        }
+    }
+    for (int i = it; i < len * 4 + 1; i++)
+    {
+        result[i - it] = result[i];
+    }
+    result = (char *)realloc(result, len * 4 - it + 1);
+    result[len * 4 - it] = '\0';
 
+    return result;
 }
+
+big_int *get_big_int_10(const char *decimal)
+{
+    return get_big_int(from_10_to_2(decimal));
+}
+
+char *from_2_to_10(const char *bin_number)
+{
+    int len = strlen(bin_number);
+    char *result = malloc(len);
+    char *power_2 = malloc(len);
+    // digit result, digit power_2.
+    int dr, dp;
+    int rem = 0;
+    int rem2 = 0;
+    for (int i = 0; i < len; i++)
+    {
+        result[i] = '0';
+        power_2[i]  = '0';
+    }
+    power_2[len - 1] = '1';
+    for (int i = len - 1; i >= 0; i--)
+    {
+        if (bin_number[i] - '0')
+        {
+            for (int j = len - 1; j >= 0; j--)
+            {
+                dr = result[j] - '0' + rem;
+                dp = power_2[j] - '0';
+                if (dr + dp >= 10) rem = 1;
+                else rem  = 0;
+                result[j] = (dr + dp) % 10 + '0';
+            }
+        }
+        // power_2 *= 2;
+        for (int j = len - 1; j >= 0; j--)
+        {
+            dp = (power_2[j] - '0');
+            power_2[j] = (((dp + dp) % 10) + rem2) + '0';
+            if (dp + dp >= 10) rem2 = 1;
+            else rem2 = 0;
+        }
+        //printf("%c%c\n", power_2[len-2], power_2[len-1]);
+    }
+    free(power_2);
+    // clean zeros from beginngig of number.
+    int ind = 0;
+    for (int i = 0; i < len; i++)
+    {
+        if (result[i] - '0')
+        {
+            ind = i;
+            break;
+        }
+    }
+    for (int i = ind; i < len; i++)
+    {
+        result[i - ind] = result[i];
+    }
+    result = realloc(result, len - ind + 1);
+    result[len - ind] = '\0';
+    return result;
+}
+
+
 
 int main()
 {
     big_int *a = get_big_int("001100011000000110000001");
-    print_big_int2(a);
-    big_int *n1 = get_big_int("1000001");
-    big_int *n2 = get_big_int("1100001");
-    //big_int *n3 = big_int_add(n1, n2);
-    //printf("\n");
-    //print_big_int2(n3);
-    printf("\n");
-    big_int *n4 = big_int_sub(n1, n2);
-    //printf("%d %d", n4->length, sizeof(n4->number));
-    print_big_int2(n4);
+    big_int *n1 = get_big_int("1100001");
+    big_int *n2 = get_big_int("1000001");
+
+    big_int *n3 = get_big_int_10("1000000000000000000008");
+    print_big_int2(n3);
+
+    char n10[] = "000001";
+    char *new2 = from_2_to_10(from_10_to_2(n10));
+    //printf("->%d\n", sizeof(new2));
+    for (int i = 0; i < strlen(new2); i++) printf("%c", new2[i]);
     return 0;
 }
