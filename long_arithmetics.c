@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "time.h"
 
 typedef struct big_int
 {
@@ -9,9 +10,47 @@ typedef struct big_int
 
 } big_int;
 
-big_int *get_big_int(const char *bin_number)
+
+char *clean_zeros(const char *num)
 {
-    size_t len = strlen(bin_number);
+    
+    int len = strlen(num);
+    char *result = malloc(len + 1);
+    int ind = 0;
+    for (int i = 0; i < len; i++)
+    {
+        if (num[i] != '0')
+        {
+            ind = i;
+            break;
+        }
+    }
+    if (ind != 0)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            result[i] = num[i + ind];
+        }
+        result = realloc(result, len - ind + 1);
+        result[len - ind] = '\0';
+    }
+    else
+    {
+        for (int i = 0; i < len; i++)
+        {
+            result[i] = num[i];
+        }
+        result[len] = '\0';
+        
+    }
+    return result;
+}
+
+big_int *get_big_int( char *bin_number)
+{
+    bin_number = clean_zeros(bin_number);
+    int len = strlen(bin_number);
+
     big_int *ans = malloc(sizeof(big_int));
     ans->length = (len & 7) ? (len >> 3) + 1 : len >> 3;
 
@@ -346,18 +385,11 @@ char *add_bin(const char *n1, const char *n2, int len1, int len2)
 
 big_int *big_int_multiply(const big_int *n1, const big_int *n2)
 {
-    // big_int *result = malloc(sizeof(big_int));
-    // result->length = n1->length * (n2->length + 1);
-    // result->number = malloc(result->length);
-    // for (int i = 0; i < result->length; i++)
-    // {
-    //     result->number[i] = 0;
-    // }
-    int len = n1->length * (n2->length + 1);
-    char *binRes = malloc(len * 8 + 1);
-    for (int i = 0; i < len * 8; i++) 
+    int len = (n1->length * (n2->length + 1)) << 3;
+    char *binRes = malloc(len + 1);
+    for (int i = 0; i < len; i++) 
         binRes[i] = '0';
-    binRes[len * 8] = '\0';
+    binRes[len] = '\0';
 
     char *bin1 = big_int_get_bin(n1);
     char *bin2 = big_int_get_bin(n2);
@@ -368,12 +400,12 @@ big_int *big_int_multiply(const big_int *n1, const big_int *n2)
         if (bin2[len2 - i] == '1')
         {
             bin1 = realloc(bin1, len1 + i);
-            for (int j = len1; j < len1 + i; j++)
+            for (int j = len1; j < len1 + i - 1; j++)
             {
                 bin1[j] = '0';
             }
-            bin1[len1 + i] = '\0';
-            binRes = add_bin(binRes, bin1, len << 3, len1 + i);
+            bin1[len1 + i - 1] = '\0';
+            binRes = add_bin(binRes, bin1, len, len1 + i - 1);
         }
     }
     
@@ -382,21 +414,65 @@ big_int *big_int_multiply(const big_int *n1, const big_int *n2)
 
 }
 
+big_int *big_int_pow(big_int *n, long r)
+{
+    big_int *result = get_big_int("1");
+    clock_t time1, time2;
+    for (int i = 0; i < r; i++)
+    {
+        time1 = clock();
+        result = big_int_multiply(result, n);
+        time2 = clock();
+        printf("%d -> %d\n", i, time2 - time1);
+    }
+    return result;
+}
+
+big_int *big_int_copy(big_int *n)
+{
+    big_int *result = malloc(sizeof(big_int));
+    result->length = n->length;
+    result->number = malloc(result->length);
+    for (int i = 0; i < result->length; i++)
+    {
+        result->number[i] = n->number[i];
+    }
+    return result;
+}
+
+big_int *big_int_pow2(const big_int *n, long r)
+{
+    big_int *result = get_big_int("1");
+    big_int *p2 = get_big_int(big_int_get_bin(n));
+    clock_t time1, time2;
+    while (r)
+    {
+        if (r & 1) result = big_int_multiply(result, p2);
+        time1 = clock();
+        p2 = big_int_multiply(p2, big_int_copy(p2));
+        time2 = clock();
+        printf("%d -> %d\n", r, time2 - time1);
+        r >>= 1;
+    }
+    return result;
+}
 
 void test_10()
 {
-    big_int *a = get_big_int("001100011000000110000001");
-    big_int *n1 = get_big_int("100000000000001");
-    big_int *n2 = get_big_int("1000000001");
+    big_int *a = get_big_int("0");
+    big_int *n1 = get_big_int_10("13546465");
+    big_int *n2 = big_int_add(a, n1);
+
+    print_big_int_10(n2);
 
     big_int *n3 = get_big_int_10("3000000000020");
     big_int *n4 = get_big_int_10("2000089999999");
     big_int *res = big_int_add(n3, n4);
-    print_big_int2(n4);
-    printf("\n");
-    print_big_int2(res);
-    printf("\n");
-    print_big_int_10(res);
+    // print_big_int2(n4);
+    // printf("\n");
+    // print_big_int2(res);
+    // printf("\n");
+    // print_big_int_10(res);
 
     // char *n4 = big_int_get_bin(n3);
     // for (int i = 0; i < strlen(n4); i++) printf("%c", n4[i]);
@@ -408,8 +484,8 @@ void test_10()
 
 void test_add_bin()
 {
-    char n1[] = "100000001";
-    char n2[] = "11111111";
+    char n1[] = "0000111";
+    char n2[] = "00000001";
     char *res = add_bin(n1, n2, strlen(n1), strlen(n2));
     for (int i = 0; i < strlen(res); i++)
     {
@@ -420,14 +496,25 @@ void test_add_bin()
 
 void test_multiply()
 {
-    big_int *n1 = get_big_int_10("1");
-    big_int *n2 = get_big_int_10("2");
+    big_int *n1 = get_big_int_10("74245624654654256456165156624541532136514332154646");
+    big_int *n2 = get_big_int_10("45645131465145614514541521312346145643524346546654654");
     big_int *res = big_int_multiply(n1, n2);
     print_big_int_10(res);
 }
 
+void test_pow()
+{
+    big_int *n = get_big_int_10("2");
+    int r = 1000;
+    n = big_int_pow2(n, r);
+    print_big_int_10(n);
+}
+
 int main()
 {
-    test_multiply();
+    //test_10();
+    //test_add_bin();
+    //test_multiply();
+    test_pow();
     return 0;
 }
