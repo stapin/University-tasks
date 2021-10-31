@@ -46,9 +46,35 @@ char *clean_zeros(const char *num)
     return result;
 }
 
-big_int *get_big_int( char *bin_number)
+char *clean_zeros2(char *num)
 {
-    bin_number = clean_zeros(bin_number);
+    
+    int len = strlen(num);
+    int ind = 0;
+    for (int i = 0; i < len; i++)
+    {
+        if (num[i] != '0')
+        {
+            ind = i;
+            break;
+        }
+    }
+    if (ind != 0)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            num[i] = num[i + ind];
+        }
+        num = realloc(num, len - ind + 1);
+        num[len - ind] = '\0';
+    }
+    return num;
+}
+
+
+big_int *get_big_int(const char *bin_num)
+{
+    char *bin_number = clean_zeros(bin_num);
     int len = strlen(bin_number);
 
     big_int *ans = malloc(sizeof(big_int));
@@ -275,7 +301,6 @@ char *from_2_to_10(const char *bin_number)
             if (dp + dp >= 10) rem2 = 1;
             else rem2 = 0;
         }
-        //printf("%c%c\n", power_2[len-2], power_2[len-1]);
     }
     free(power_2);
     // clean zeros from beginngig of number.
@@ -414,20 +439,6 @@ big_int *big_int_multiply(const big_int *n1, const big_int *n2)
 
 }
 
-big_int *big_int_pow(big_int *n, long r)
-{
-    big_int *result = get_big_int("1");
-    clock_t time1, time2;
-    for (int i = 0; i < r; i++)
-    {
-        time1 = clock();
-        result = big_int_multiply(result, n);
-        time2 = clock();
-        printf("%d -> %d\n", i, time2 - time1);
-    }
-    return result;
-}
-
 big_int *big_int_copy(big_int *n)
 {
     big_int *result = malloc(sizeof(big_int));
@@ -440,8 +451,9 @@ big_int *big_int_copy(big_int *n)
     return result;
 }
 
-big_int *big_int_pow2(const big_int *n, long r)
+big_int *big_int_pow(const big_int *n, int r)
 {
+    if (r <= 0) return get_big_int("0");
     big_int *result = get_big_int("1");
     big_int *p2 = get_big_int(big_int_get_bin(n));
     clock_t time1, time2;
@@ -505,8 +517,8 @@ void test_multiply()
 void test_pow()
 {
     big_int *n = get_big_int_10("2");
-    int r = 1000;
-    n = big_int_pow2(n, r);
+    int r = 11;
+    n = big_int_pow(n, r);
     print_big_int_10(n);
 }
 
