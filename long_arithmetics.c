@@ -13,7 +13,6 @@ typedef struct big_int
 
 char *clean_zeros(const char *num)
 {
-    
     int len = strlen(num);
     char *result = malloc(len + 1);
     int ind = 0;
@@ -48,7 +47,6 @@ char *clean_zeros(const char *num)
 
 char *clean_zeros2(char *num)
 {
-    
     int len = strlen(num);
     int ind = 0;
     for (int i = 0; i < len; i++)
@@ -120,7 +118,6 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
     big_int *result = malloc(sizeof(big_int));
     int temp = 0;
     int rem = 0;
-    // realloc
     result->length = n1->length > n2->length ? n1->length : n2->length;
     result->number = malloc(result->length);
     for (int i = 1; i <= result->length; i++)
@@ -211,8 +208,8 @@ char *from_10_to_2(const char *number)
     int it = 1;
     short digit;
     short rem = 0;
-    unsigned char flag = 0;
-    while (1)
+    unsigned char flag = 1;
+    while (flag)
     {
         flag = 0;
         if ((num[len - 1] - '0') & 1) result[len*4 - it] = '1';
@@ -235,10 +232,8 @@ char *from_10_to_2(const char *number)
                 rem = 0;
             }
             num[i] = digit + '0';
-            
         }
         rem = 0;
-        if (!flag) break;
     }
     // delete '0' form beggining of number.
     it = 0;
@@ -451,6 +446,14 @@ big_int *big_int_copy(big_int *n)
     return result;
 }
 
+big_int *big_int_assign(big_int *n)
+{
+    big_int *result = malloc(sizeof(big_int));
+    result->length = n->length;
+    result->number = memcpy(result->number, n->number, result->length);
+    return result;
+}
+
 big_int *big_int_pow(const big_int *n, int r)
 {
     if (r <= 0) return get_big_int("0");
@@ -471,15 +474,15 @@ big_int *big_int_pow(const big_int *n, int r)
 
 void test_10()
 {
-    big_int *a = get_big_int("0");
-    big_int *n1 = get_big_int_10("13546465");
+    big_int *a = get_big_int_10("1111111111");
+    big_int *n1 = get_big_int_10("2222222222");
     big_int *n2 = big_int_add(a, n1);
 
     print_big_int_10(n2);
 
-    big_int *n3 = get_big_int_10("3000000000020");
-    big_int *n4 = get_big_int_10("2000089999999");
-    big_int *res = big_int_add(n3, n4);
+    // big_int *n3 = get_big_int_10("3000000000020");
+    // big_int *n4 = get_big_int_10("2000089999999");
+    // big_int *res = big_int_add(n3, n4);
     // print_big_int2(n4);
     // printf("\n");
     // print_big_int2(res);
@@ -524,9 +527,9 @@ void test_pow()
 
 int main()
 {
-    //test_10();
+    test_10();
     //test_add_bin();
     //test_multiply();
-    test_pow();
+    //test_pow();
     return 0;
 }
