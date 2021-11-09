@@ -13,10 +13,10 @@ typedef struct big_int
 
 char *clean_zeros(const char *num)
 {
-    int len = strlen(num);
+    long len = strlen(num);
     char *result = malloc(len + 1);
-    int ind = 0;
-    for (int i = 0; i < len; i++)
+    long ind = 0;
+    for (long i = 0; i < len; i++)
     {
         if (num[i] != '0')
         {
@@ -26,7 +26,7 @@ char *clean_zeros(const char *num)
     }
     if (ind != 0)
     {
-        for (int i = 0; i < len; i++)
+        for (long i = 0; i < len - ind; i++)
         {
             result[i] = num[i + ind];
         }
@@ -35,7 +35,7 @@ char *clean_zeros(const char *num)
     }
     else
     {
-        for (int i = 0; i < len; i++)
+        for (long i = 0; i < len; i++)
         {
             result[i] = num[i];
         }
@@ -434,7 +434,49 @@ big_int *big_int_multiply(const big_int *n1, const big_int *n2)
 
 }
 
-big_int *big_int_copy(big_int *n)
+
+big_int *big_int_multiply_2(const big_int *n1, const big_int *n2)
+{
+    big_int *result = malloc(sizeof(big_int));
+    result->length = (n1->length + n2->length);
+    result->number = malloc(result->length);
+    for (int i = 0; i < result->length; i++)
+        result->number[i] = 0;
+    int carry = 0;
+    int temp = 0;
+    int ind = 0;
+    for (int i = n2->length - 1; i >= 0; i--)
+    {
+        for (int j = n1->length - 1 ; j >= 0; j--)
+        {
+            temp = n1->number[j] * n2->number[i] + carry + result->number[i + j + 1];
+            result->number[i + j + 1] = temp & 255;
+            //printf("%d --> %d\n", result->number[i + j + 1], i + j + 1);
+            carry = temp >> 8;   
+            if (temp) ind = i + j + 1;
+        }
+    }
+    // if carry -> realloc; length = a + b;
+    if (carry)
+        result->number[0] = carry;
+    // else
+    // {
+    //     for (int i = 0; i < count; i++)
+    //     {
+    //         /* code */
+    //     }
+        
+    // }
+    return result;
+    
+}
+
+void left_shift()
+{
+    
+}
+
+big_int *big_int_copy(const big_int *n)
 {
     big_int *result = malloc(sizeof(big_int));
     result->length = n->length;
@@ -446,7 +488,7 @@ big_int *big_int_copy(big_int *n)
     return result;
 }
 
-big_int *big_int_assign(big_int *n)
+big_int *big_int_assign(const big_int *n)
 {
     big_int *result = malloc(sizeof(big_int));
     result->length = n->length;
@@ -471,6 +513,25 @@ big_int *big_int_pow(const big_int *n, int r)
     }
     return result;
 }
+
+big_int *big_int_pow2(const big_int *n, int r)
+{
+    if (r <= 0) return get_big_int("0");
+    big_int *result = get_big_int("1");
+    big_int *p2 = big_int_copy(n);
+    clock_t time1, time2;
+    while (r)
+    {
+        if (r & 1) result = big_int_multiply_2(result, p2);
+        time1 = clock();
+        p2 = big_int_multiply_2(p2, big_int_copy(p2));
+        time2 = clock();
+        printf("%d -> %d\n", r, time2 - time1);
+        r >>= 1;
+    }
+    return result;
+}
+
 
 void test_10()
 {
@@ -511,25 +572,46 @@ void test_add_bin()
 
 void test_multiply()
 {
-    big_int *n1 = get_big_int_10("74245624654654256456165156624541532136514332154646");
-    big_int *n2 = get_big_int_10("45645131465145614514541521312346145643524346546654654");
-    big_int *res = big_int_multiply(n1, n2);
+    big_int *n1 = get_big_int_10("101");
+    big_int *n2 = get_big_int_10("100");
+    big_int *res = big_int_multiply_2(n1, n2);
     print_big_int_10(res);
 }
 
 void test_pow()
 {
-    big_int *n = get_big_int_10("2");
-    int r = 11;
-    n = big_int_pow(n, r);
+    big_int *n = get_big_int_10("3");
+    int r = 5000;
+    clock_t time1, time2;
+    time1 = clock();
+    n = big_int_pow2(n, r);
+    time2 = clock();
+    printf("total -> %d\n", time2 - time1);
     print_big_int_10(n);
+}
+
+void test()
+{
+    int a = 10000;
+    printf("%d\n%d\n", a & 255, 39 * 256 + 16);
+    unsigned char *m = malloc(2);
+    m[0] = 0; 
+    m[1] = 0;
+    m[1] = a & 255;
+    printf("%d\n", m[1]);
+
 }
 
 int main()
 {
-    test_10();
+    //test();
+    //test_10();
     //test_add_bin();
     //test_multiply();
-    //test_pow();
+    // clock_t time1, time2;
+    // time1 = clock();
+    test_pow();
+    // time2 = clock();
+    // printf("\n-> total time = %d", time2 - time1);
     return 0;
 }
