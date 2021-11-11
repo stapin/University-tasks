@@ -162,8 +162,8 @@ big_int *big_int_sub(const big_int *n1, const big_int *n2)
     int diff = n1->length - n2->length;
     big_int *result = malloc(sizeof(big_int));
     result->length = n1->length;
-    result->number = malloc(n1->length);
-    for (int i = 0; i < result->length; i++) result->number[i] = 0;
+    result->number = calloc(n1->length, sizeof(char));
+    //for (int i = 0; i < result->length; i++) result->number[i] = 0;
     int ind = 0;
     for (int i = 0; i < n1->length; i++)
     {
@@ -190,7 +190,32 @@ big_int *big_int_sub(const big_int *n1, const big_int *n2)
             ind = i;
         }
     }
+    for (int i = 0; i < result->length; i++)
+    {
+        if (result->number[i] && (i != 0))
+        {
+            for (int j = i; j < result->length; j++)
+            {
+                result->number[j - i] = result->number[j];
+            }
+            result->length -= i;
+            result->number = realloc(result->number, result->length);
+            break;
+        }
+    }
     return result;
+}
+
+int big_int_is_bigger(const big_int *n1, const big_int *n2)
+{
+    if (n1->length > n2->length) return 1;
+    if (n1->length < n2->length) return 0;
+    for (int i = 0; i < n1->length; i++)
+    {
+        if (n1->number[i] < n2->number[i]) return 0;
+        if (n1->number[i] > n2->number[i]) return 1;
+    }
+    return 1;
 }
 
 char *from_10_to_2(const char *number)
@@ -346,12 +371,19 @@ char *big_int_get_bin(const big_int *n)
     return result;
 }
 
+void big_int_free(big_int *n)
+{
+    free(n->number);
+    free(n);
+}
+
 void print_big_int_10(const big_int *n)
 {
     char *result = big_int_get_bin(n);
     result = from_2_to_10(result);
     for (int i = 0; i < strlen(result); i++) 
         printf("%c", result[i]);
+    free(result);
 }
 
 char *big_int_get_decimal(const big_int *n)
@@ -362,119 +394,50 @@ char *big_int_get_decimal(const big_int *n)
 }
 
 
-char *add_bin(const char *n1, const char *n2, int len1, int len2)
+void left_shift(big_int *x, int value)
 {
-    // add input processing.
-    int len = len1 > len2 ? len1 : len2;
-    char *result = malloc(len + 1);
-    result[len] = '\0';
-    char rem = 0;
-    char temp = 0;
-    for (int i = 1; i <= len + 1; i++)
-    {
-        if ( (len1 - i + 1 > 0)  && (len2 - i + 1 > 0))
-        {
-            temp = (n1[len1 - i] - '0') + (n2[len2 - i] - '0') + rem;
-            result[len - i] = (temp & 1) + '0';
-            rem = temp >> 1;
-        }
-        else if (len1 - i + 1> 0)
-        {
-            temp = (n1[len1 - i] - '0');
-            result[len1 - i] = ((temp + rem) & 1) + '0';
-            rem = (temp + rem) >> 1;
-        }
-        else if (len2 - i + 1 > 0)
-        {
-            temp = (n2[len2 - i] - '0');
-            result[len2 - i] = ((temp + rem) & 1) + '0';
-            rem = (temp + rem) >> 1;
-        }
-        else if (rem)
-        {
-            result = realloc(result, len + 2);
-            for (int j = len + 1; j > 0; j--)
-            {
-                result[j] = result[j - 1];
-            }
-            result[0] = '1';
-        }
-    }
-    return result;
-}
-
-big_int *big_int_multiply(const big_int *n1, const big_int *n2)
-{
-    int len = (n1->length * (n2->length + 1)) << 3;
-    char *binRes = malloc(len + 1);
-    for (int i = 0; i < len; i++) 
-        binRes[i] = '0';
-    binRes[len] = '\0';
-
-    char *bin1 = big_int_get_bin(n1);
-    char *bin2 = big_int_get_bin(n2);
-    int len1 = strlen(bin1);
-    int len2 = strlen(bin2);
-    for (int i = 1; i <= len2; i++)
-    {
-        if (bin2[len2 - i] == '1')
-        {
-            bin1 = realloc(bin1, len1 + i);
-            for (int j = len1; j < len1 + i - 1; j++)
-            {
-                bin1[j] = '0';
-            }
-            bin1[len1 + i - 1] = '\0';
-            binRes = add_bin(binRes, bin1, len, len1 + i - 1);
-        }
-    }
     
-    big_int *result = get_big_int(binRes);
-    return result;
-
 }
-
 
 big_int *big_int_multiply_2(const big_int *n1, const big_int *n2)
 {
     big_int *result = malloc(sizeof(big_int));
-    result->length = (n1->length + n2->length);
+    result->length = (n1->length + n2->length - 1);
     result->number = malloc(result->length);
     for (int i = 0; i < result->length; i++)
         result->number[i] = 0;
     int carry = 0;
     int temp = 0;
-    int ind = 0;
     for (int i = n2->length - 1; i >= 0; i--)
     {
-        for (int j = n1->length - 1 ; j >= 0; j--)
+        int j = n1->length - 1;
+        for ( ; j >= 0; j--)
         {
-            temp = n1->number[j] * n2->number[i] + carry + result->number[i + j + 1];
-            result->number[i + j + 1] = temp & 255;
-            //printf("%d --> %d\n", result->number[i + j + 1], i + j + 1);
-            carry = temp >> 8;   
-            if (temp) ind = i + j + 1;
+            temp = n1->number[j] * n2->number[i] + carry + result->number[i + j];
+            result->number[i + j] = temp & 255;
+            carry = temp >> 8;
+        }
+        if (carry)
+        {   
+            if (i + j >= 0)
+            {
+                result->number[i + j] += carry;
+                carry = 0;
+            }
         }
     }
-    // if carry -> realloc; length = a + b;
+
     if (carry)
+    {
+        result->length += 1;
+        result->number = realloc(result->number, result->length);
+        for (long i = result->length - 2; i >= 0; i--)
+            result->number[i + 1] = result->number[i];
         result->number[0] = carry;
-    // else
-    // {
-    //     for (int i = 0; i < count; i++)
-    //     {
-    //         /* code */
-    //     }
-        
-    // }
+    }
     return result;
-    
 }
 
-void left_shift()
-{
-    
-}
 
 big_int *big_int_copy(const big_int *n)
 {
@@ -496,27 +459,9 @@ big_int *big_int_assign(const big_int *n)
     return result;
 }
 
-big_int *big_int_pow(const big_int *n, int r)
-{
-    if (r <= 0) return get_big_int("0");
-    big_int *result = get_big_int("1");
-    big_int *p2 = get_big_int(big_int_get_bin(n));
-    clock_t time1, time2;
-    while (r)
-    {
-        if (r & 1) result = big_int_multiply(result, p2);
-        time1 = clock();
-        p2 = big_int_multiply(p2, big_int_copy(p2));
-        time2 = clock();
-        printf("%d -> %d\n", r, time2 - time1);
-        r >>= 1;
-    }
-    return result;
-}
-
 big_int *big_int_pow2(const big_int *n, int r)
 {
-    if (r <= 0) return get_big_int("0");
+    if (r < 0) return get_big_int("0");
     big_int *result = get_big_int("1");
     big_int *p2 = big_int_copy(n);
     clock_t time1, time2;
@@ -534,9 +479,9 @@ big_int *big_int_pow2(const big_int *n, int r)
 
 void test_10()
 {
-    big_int *a = get_big_int_10("1111111111");
+    big_int *a = get_big_int_10("2222222224");
     big_int *n1 = get_big_int_10("2222222222");
-    big_int *n2 = big_int_add(a, n1);
+    big_int *n2 = big_int_sub(a, n1);
 
     print_big_int_10(n2);
 
@@ -556,30 +501,29 @@ void test_10()
     // for (int i = 0; i < strlen(new2); i++) printf("%c", new2[i]);
 }
 
-void test_add_bin()
-{
-    char n1[] = "0000111";
-    char n2[] = "00000001";
-    char *res = add_bin(n1, n2, strlen(n1), strlen(n2));
-    for (int i = 0; i < strlen(res); i++)
-    {
-        printf("%c", res[i]);
-    }
-    
-}
+// void test_add_bin()
+// {
+//     char n1[] = "0000111";
+//     char n2[] = "00000001";
+//     char *res = add_bin(n1, n2, strlen(n1), strlen(n2));
+//     for (int i = 0; i < strlen(res); i++)
+//     {
+//         printf("%c", res[i]);
+//     }
+// }
 
 void test_multiply()
 {
-    big_int *n1 = get_big_int_10("101");
-    big_int *n2 = get_big_int_10("100");
+    big_int *n1 = get_big_int_10("100000");
+    big_int *n2 = get_big_int_10("100000");
     big_int *res = big_int_multiply_2(n1, n2);
     print_big_int_10(res);
 }
 
 void test_pow()
 {
-    big_int *n = get_big_int_10("10");
-    int r = 9;
+    big_int *n = get_big_int_10("3");
+    int r = 5000;
     clock_t time1, time2;
     time1 = clock();
     n = big_int_pow2(n, r);
@@ -588,9 +532,14 @@ void test_pow()
     print_big_int_10(n);
 }
 
-big_int big_int_reminder_division(const big_int *x, const big_int *rem)
+big_int big_int_reminder_division(const big_int *x, const big_int *divider)
 {
-    
+    big_int *div = big_int_assign(divider);
+    big_int *n = big_int_assign(x);
+    while (div->length <= n->length)
+        div = big_int_multiply_2(div, big_int_assign(div));
+
+
 }
 
 // big_int big_int_mod_pow(const big_int *x, const big_int *y, const big_int *m)
@@ -625,12 +574,12 @@ void test()
 int main()
 {
     //test();
-    //test_10();
+    test_10();
     //test_add_bin();
     //test_multiply();
     // clock_t time1, time2;
     // time1 = clock();
-    test_pow();
+    //test_pow();
     // time2 = clock();
     // printf("\n-> total time = %d", time2 - time1);
     
