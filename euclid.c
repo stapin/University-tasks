@@ -1,6 +1,6 @@
 #include "stdio.h"
 
-typedef unsigned long long ull;
+typedef long long ull;
 
 int euclid_recursive(int a, int b)
 {
