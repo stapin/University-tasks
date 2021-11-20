@@ -361,7 +361,7 @@ big_int *big_int_sub(const big_int *n1, const big_int *n2)
         else
         {
             if (result->number[ind] == 0) return 0;
-            temp = n1->number[i] + 256;
+            temp = n1->number[i] + BASE;
             result->number[ind]--;
             result->number[i] = temp - n2->number[i-diff];
             ind = i;
@@ -402,7 +402,7 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
 
     big_int *result = malloc(sizeof(big_int));
     int temp = 0;
-    int rem = 0;
+    int carry = 0;
     result->length = n1->length > n2->length ? n1->length : n2->length;
     result->number = malloc(result->length);
     result->sign = 1;
@@ -410,25 +410,24 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
     {
         if ( ((int)n1->length - i + 1 > 0) && ((int)n2->length - i + 1 > 0) )
         {
-            temp = n1->number[n1->length - i] + n2->number[n2->length - i] + rem;
-            result->number[result->length - i] = temp & 255;
-            rem = temp >> 8;
+            temp = n1->number[n1->length - i] + n2->number[n2->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
         }
         else if ((int)n1->length - i + 1 > 0)
         {
-            temp = n1->number[n1->length - i] + rem;
-            result->number[result->length - i] = temp & 255;
-            rem = temp >> 8;
+            temp = n1->number[n1->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
         }
         else if ((int)n2->length - i + 1 > 0)
         {
-            temp = n2->number[n2->length - i] + rem;
-            result->number[result->length - i] = temp & 255;
-            rem = temp >> 8;
+            temp = n2->number[n2->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
         }
-        
     }
-    if (rem)
+    if (carry)
     {
         result->length++;
         result->number = (unsigned char*) realloc(result->number, result->length);
@@ -442,6 +441,15 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
     if (!(n1->sign || n2->sign)) result->sign = 0;
     return result;
 }
+
+// big_int *big_int_sub(const big_int *n1, const big_int *n2)
+// {
+//     big_int *temp = big_int_assign(n2); 
+//     temp->sign = 1 - temp->sign;
+//     big_int *res = big_int_add(n1, temp);
+//     big_int_free(temp);
+//     return res;
+// }
 
 void left_shift(big_int *x, unsigned int value)
 {
@@ -708,11 +716,17 @@ void test_assign()
     print_big_int_10(n2);
 }
 
+
 void test_mod()
 {
-    big_int *n1 = get_big_int_10("715379", 1);
-    big_int *mod = get_big_int_10("100", 1);
+    big_int *n1 = get_big_int_10("715379531346476456454434646546465423145411111111111111111111111111111111111333333333333333333377777777777777777777773333333333333333333333333777777777777777777777773333", 1);
+    big_int *mod = get_big_int_10("100000000", 1);
+    mod = get_big_int_10("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 1);
+    n1 = get_big_int_10("71117", 1);
+    mod = get_big_int_10("1000", 1);
     big_int *res = big_int_mod(n1, mod);
+    //mod = get_big_int_10("999999999999999999999999999999999999999999999999999999999999999999999999999", 1);
+    //res = big_int_sub(n1, mod);
     print_big_int_10(res);
 }
 
@@ -741,7 +755,7 @@ int main()
     //test_multiply();
     //test_pow();
     //test_assign();
-    test_mod();
+    //test_mod();
     //test_rshift();
     //test_mod_pow();
     return 0;
