@@ -361,6 +361,8 @@ big_int *big_int_sub(const big_int *n1, const big_int *n2)
         else
         {
             if (result->number[ind] == 0) return 0;
+            for (int j = ind + 1; j < i; j++)            
+                result->number[j] = BASE - 1;
             temp = n1->number[i] + BASE;
             result->number[ind]--;
             result->number[i] = temp - n2->number[i-diff];
@@ -483,6 +485,7 @@ void *right_shift_2(big_int *x)
         x->length--;
         x->number = realloc(x->number, x->length);
     }
+    return NULL;
 }
 
 big_int *big_int_multiply(const big_int *n1, const big_int *n2)
@@ -543,7 +546,7 @@ big_int *big_int_pow(const big_int *n, int r)
         time1 = clock();
         p2 = big_int_multiply(p2, big_int_assign(p2));
         time2 = clock();
-        printf("%d -> %d\n", r, time2 - time1);
+        printf("%d -> %ld\n", r, time2 - time1);
         r >>= 1;
     }
     return result;
@@ -574,6 +577,7 @@ big_int *big_int_mod(const big_int *divident, const big_int *modul)
         while (big_int_is_greater_or_equal(n, subt))
         {
             temp = subt;
+            //printf("%d\n", subt->number[0]);
             subt = big_int_add(subt, subt2);
             big_int_free(temp);
         }
@@ -593,7 +597,6 @@ big_int *big_int_mod_pow(const big_int *n, const big_int *y, const big_int *m)
 {
     big_int *ans = get_big_int("1", 1);
     big_int *temp;
-    big_int *temp2;
     big_int *x = big_int_assign(n);
     unsigned char mask = 1;
     for (int i = y->length - 1; i >= 0; i--)
@@ -690,7 +693,7 @@ void test_pow()
     time1 = clock();
     n = big_int_pow(n, r);
     time2 = clock();
-    printf("total -> %d\n", time2 - time1);
+    printf("total -> %ld\n", time2 - time1);
     print_big_int_10(n);
     print_big_int_10(big_int_mod(n, get_big_int_10("1000000000", 1)));
 }
@@ -716,14 +719,15 @@ void test_assign()
     print_big_int_10(n2);
 }
 
-
 void test_mod()
 {
     big_int *n1 = get_big_int_10("715379531346476456454434646546465423145411111111111111111111111111111111111333333333333333333377777777777777777777773333333333333333333333333777777777777777777777773333", 1);
-    big_int *mod = get_big_int_10("100000000", 1);
+    big_int *mod = get_big_int_10("1000000000000000000000000", 1);
     mod = get_big_int_10("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 1);
-    n1 = get_big_int_10("71117", 1);
-    mod = get_big_int_10("1000", 1);
+    //n1 = get_big_int_10("71117", 1);
+    //mod = get_big_int_10("1000", 1);
+    printf("%d %d\n", n1->number[0], mod->number[0]);
+    printf("%d %d\n" ,n1->length, mod->length);
     big_int *res = big_int_mod(n1, mod);
     //mod = get_big_int_10("999999999999999999999999999999999999999999999999999999999999999999999999999", 1);
     //res = big_int_sub(n1, mod);
@@ -742,6 +746,9 @@ void test_mod_pow()
     big_int *x = get_big_int_10("3", 1);
     big_int *y = get_big_int_10("5000", 1);
     big_int *m = get_big_int_10("1000000000", 1);
+    x = get_big_int_10("65614564543443", 1);
+    y = get_big_int_10("8767687235467867621377", 1);
+    m = get_big_int_10("319797212497321917", 1);
     big_int *res = big_int_mod_pow(x, y, m);
     print_big_int_10(res);
     
@@ -757,6 +764,6 @@ int main()
     //test_assign();
     //test_mod();
     //test_rshift();
-    //test_mod_pow();
+    test_mod_pow();
     return 0;
 }

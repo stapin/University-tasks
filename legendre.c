@@ -18,7 +18,7 @@ int legendre_symbol(ull a, ull p)
 }
 
 // p != 2;
-int legendre_symbol2(ull q, ull p)
+short legendre_symbol2(ull q, ull p)
 {
     if ((q % p) == 0)
         return 0;
@@ -87,7 +87,7 @@ void time_diff()
 
 }
 
-ull pow2(int a, int b)
+int pow2(int a, int b)
 {
     int ans = 1;
     while (b)
@@ -98,7 +98,7 @@ ull pow2(int a, int b)
     return ans;
 }
 
-int sqr_mod(int a, int p)
+int sqrt_mod(int a, int p)
 {
     if (legendre_symbol2(a, p) != 1)
         return 0;
@@ -128,7 +128,7 @@ int sqr_mod(int a, int p)
             break;
         }
     }
-    int x, y;
+    ull x, y;
     while (r)
     {
         x = mod_pow(a, pow2(2, r) * h, p);
@@ -144,8 +144,7 @@ int sqr_mod(int a, int p)
     y = mod_pow(notRes, rb, p);
     if ((x * y) % p != 1)
         rb += (p - 1) >> 1;
-    //printf("== %d %d\n", x, y);
-    return mod(mod_pow(a, (h + 1) >> 1, p) * mod_pow(notRes, rb >> 1, p), p);
+    return mod(mod_pow(a, (h + 1) >> 1, p) * (ull)mod_pow(notRes, rb >> 1, p), p);
 }
 
 void test()
@@ -156,27 +155,25 @@ void test()
         printf("%d %d %d\n", i, legendre_symbol2(i, p), mod(i * i, p));
     }
     printf("%d\n", mod_pow(3, 7, p));
-    printf("%d", sqr_mod(2, 129));
+    printf("%d", sqrt_mod(2, 129));
+}
+
+void test_sqrt(int p, int m)
+{
+    int ans = sqrt_mod(p, m);
+    int res = mod_pow(ans, 2, m) == p ? 1: 0;
+    printf("%d %d\n", res, ans);
 }
 
 int main()
 {
-    int p = 1789, q = 103;
-    int ans = sqr_mod(q, p);
-    printf("ans = %d\n", ans);
-    // printf("%d\n", p - ans);
-    // printf("%d\n", mod_pow(ans, 2, p));
-    printf("%d %d\n", sqr_mod(108, 24481), legendre_symbol2(108, 24481));
-    printf("%d\n", mod_pow(16509, 2, 24481));
-    p = 157457;
-    //p = 99929;
-    //p = 1789;
-    q = 161;
-    //p = 131071;
-    //q = 7;
-    //p = 25799;
-    //for (int i=1; i < p; i++) printf("=%d\n", legendre_symbol2(i, p));
-    ans = sqr_mod(q, p);
-    printf("%d %lli\n", ans, mod_pow(ans, 2, p));
+    test_sqrt(103, 1789);
+    test_sqrt(108, 24481);
+    test_sqrt(7, 1789);
+    test_sqrt(7, 131071);
+    test_sqrt(5, 25799);
+    test_sqrt(7, 99929);
+    test_sqrt(161, 157457);
+    
     return 0;
 }

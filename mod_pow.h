@@ -2,7 +2,7 @@
 #define MOD_POW
 
 //#define ull unsigned long long
-typedef unsigned long long ull;
+typedef long long int ull;
 
 int mod_pow_recursive(int x, long y, int m);
 

@@ -1,7 +1,7 @@
 #include "stdio.h"
 
 
-typedef long long ull;
+typedef long long int ull;
 
 int mod_pow_recursive(int x, long y, int m)
 {
