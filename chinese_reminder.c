@@ -94,8 +94,8 @@ void print_chinese2()
     printf("%d", chinese_reminder3(a, m, 3));
 }
 
-int main()
-{
-    print_chinese_rem();
-    return 0;
-}
+// int main()
+// {
+//     print_chinese_rem();
+//     return 0;
+// }

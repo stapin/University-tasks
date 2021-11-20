@@ -1,6 +1,6 @@
 #include "stdio.h"
 
-typedef unsigned long long ull;
+typedef long long int ull;
 
 int euclid_recursive(int a, int b)
 {
@@ -22,19 +22,21 @@ int euclid(int a, int b)
 int euclid_binary(int a, int b)
 {
     int k = 0;
-    while (a&1 == 0 && b&1 == 0)
+    while ((a & 1) == 0 && (b & 1) == 0)
     {
         a >>= 1; b >>= 1;
         k++;           
     }
     while(a && b)
     {
-        if (a == b) return b<<k;
-        while (a&1 == 0) a >>= 1;
-        while (b&1 == 0) b >>= 1; 
+        if (a == b) return b << k;
+        while ((a & 1) == 0) a >>= 1;
+        while ((b & 1) == 0) b >>= 1; 
         if (a < b) b -= a;
         else a -= b;       
     }
+    if (a) return a << k;
+    else return b << k;
 }
 
 int abs(int a)
@@ -45,7 +47,7 @@ int abs(int a)
 
 int euclid_extended(int a, int b, int *x, int *y)
 {
-    int a11=1, a12=0, a21=0, a22=1;
+    int a11 = 1, a12 = 0, a21 = 0, a22 = 1;
     int a11n, a12n, a21n, a22n;
     int b11;
     int i = 1;
@@ -136,5 +138,9 @@ int mul_inv(int a, int m)
 int mod(ull x, ull m)
 {
     if (x >= 0) return x % m;
-    else return m + (x % m);
+    else 
+    {
+        printf("%s\n", "something wrong.");
+        return m + (x % m);
+    }
 }

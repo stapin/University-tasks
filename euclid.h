@@ -15,7 +15,7 @@ int linear_diophantine(int *a, int *x, int n, int b);
 int mul_inv(int a, int m);
 
 int lcm(const int *a, int n);
-typedef unsigned long long ull;
-int mod(ull x, ull m);
+
+int mod(long long int x, long long int m);
 
 #endif
