@@ -211,13 +211,6 @@ void big_int_free(big_int *n)
     free(n);
 }
 
-short big_int_is_zero(const big_int *n)
-{
-    if (n->length == 1 && n->number[0] == 0)
-        return 1;
-    return 0;
-}
-
 
 /* Getters */
 
@@ -324,6 +317,13 @@ short big_int_is_equal(const big_int *n1, const big_int *n2)
     for (int i = 0; i < n1->length; i++)
         if (n1->number[i] != n2->number[i]) return 0;
     return 1;
+}
+
+short big_int_is_zero(const big_int *n)
+{
+    if ((n->length == 1) && (!n->number[0]))
+        return 1;
+    return 0;
 }
 
 
@@ -445,6 +445,87 @@ big_int *big_int_add(const big_int *n1, const big_int *n2)
     return result;
 }
 
+big_int *big_int_add_f(big_int *n1, big_int *n2)
+{
+    if (n1->sign && !n2->sign)
+    {
+        if (big_int_is_greater_or_equal(n1, n2))
+        {
+            big_int* temp = big_int_sub_positive(n1, n2);
+            free(n1);
+            free(n2);
+            return temp;
+        }
+        else
+        {
+            big_int* temp = big_int_sub_positive(n2, n1);
+            free(n1);
+            free(n2);
+            return temp;
+        }
+    }
+    if (!n1->sign && n2->sign)
+    {
+        if (big_int_is_greater_or_equal(n2, n1))
+        {
+            big_int* temp = big_int_sub_positive(n2, n1);
+            big_int_free(n1);
+            big_int_free(n2);
+            return temp;
+        } 
+        else
+        {
+            big_int* temp = big_int_sub_positive(n1, n2);
+            big_int_free(n1);
+            big_int_free(n2);
+            return temp;
+        } 
+    }
+
+    big_int *result = malloc(sizeof(big_int));
+    int temp = 0;
+    int carry = 0;
+    result->length = n1->length > n2->length ? n1->length : n2->length;
+    result->number = malloc(result->length);
+    result->sign = 1;
+    for (int i = 1; i <= result->length; i++)
+    {
+        if ( ((int)n1->length - i + 1 > 0) && ((int)n2->length - i + 1 > 0) )
+        {
+            temp = n1->number[n1->length - i] + n2->number[n2->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
+        }
+        else if ((int)n1->length - i + 1 > 0)
+        {
+            temp = n1->number[n1->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
+        }
+        else if ((int)n2->length - i + 1 > 0)
+        {
+            temp = n2->number[n2->length - i] + carry;
+            result->number[result->length - i] = temp & (BASE - 1);
+            carry = temp >> 8;
+        }
+    }
+    if (carry)
+    {
+        result->length++;
+        result->number = (unsigned char*) realloc(result->number, result->length);
+        for (int it = result->length - 1; it > 0; it--)
+        {
+            result->number[it] = result->number[it - 1];
+        }
+        result->number[0] = 1;
+    }
+
+    if (!(n1->sign || n2->sign)) result->sign = 0;
+    big_int_free(n1);
+    big_int_free(n2);
+    return result;
+}
+
 big_int *big_int_sub(const big_int *n1, const big_int *n2)
 {
     big_int *temp = big_int_assign(n2); 
@@ -454,7 +535,7 @@ big_int *big_int_sub(const big_int *n1, const big_int *n2)
     return res;
 }
 
-void left_shift(big_int *x, unsigned int value)
+void left_shift(big_int *x, int value)
 {
     if (value <= 0) return;
     x->length += value;
@@ -463,7 +544,7 @@ void left_shift(big_int *x, unsigned int value)
         x->number[i] = 0;
 }
 
-void *right_shift_2(big_int *x)
+void right_shift_2(big_int *x)
 {
     short d = 0;
     if (!(x->number[0] >> 1)) d = 1;
@@ -486,7 +567,29 @@ void *right_shift_2(big_int *x)
         x->length--;
         x->number = realloc(x->number, x->length);
     }
-    return NULL;
+    return;
+}
+
+void left_shift_2(big_int *x)
+{
+    int carry = 0;
+    int temp = 0;
+    for (int i = x->length - 1; i >= 0; i--)
+    {
+        x->number[i] = (x->number[i] + carry) << 1;
+        carry = x->number[i] >> 8;
+    }
+    if (carry)
+    {
+        x->length++;
+        x->number = realloc(x->number, x->length);
+        for (int i = x->length - 1; i >= 1; i--)
+        {
+            x->number[i] = x->number[i - 1];
+        }
+        x->number[0] = 1;
+    }
+    return;
 }
 
 big_int *big_int_multiply(const big_int *n1, const big_int *n2)
@@ -531,6 +634,59 @@ big_int *big_int_multiply(const big_int *n1, const big_int *n2)
 
     if ((n1->sign + n2->sign) == 1) result->sign = 0;
     else result->sign = 1;
+
+    return result;
+}
+
+big_int *big_int_multiply_f(big_int *n1, big_int *n2)
+{
+    if ( big_int_is_zero(n1) || big_int_is_zero(n2) )
+    {
+        big_int_free(n1);
+        big_int_free(n2);
+        return get_big_int("0", 1); 
+    }
+
+    big_int *result = malloc(sizeof(big_int));
+    result->length = (n1->length + n2->length - 1);
+    result->number = calloc(result->length, sizeof(char));
+
+    int carry = 0;
+    int temp = 0;
+
+    for (int i = n2->length - 1; i >= 0; i--)
+    {
+        int j = n1->length - 1;
+        for ( ; j >= 0; j--)
+        {
+            temp = n1->number[j] * n2->number[i] + carry + result->number[i + j];
+            result->number[i + j] = temp & (BASE - 1);
+            carry = temp >> 8;
+        }
+        if (carry)
+        {   
+            if (i + j >= 0)
+            {
+                result->number[i + j] += carry;
+                carry = 0;
+            }
+        }
+    }
+
+    if (carry)
+    {
+        result->length ++;
+        result->number = realloc(result->number, result->length);
+        for (long i = result->length - 2; i >= 0; i--)
+            result->number[i + 1] = result->number[i];
+        result->number[0] = carry;
+    }
+
+    if ((n1->sign + n2->sign) == 1) result->sign = 0;
+    else result->sign = 1;
+
+    big_int_free(n1);
+    big_int_free(n2);
 
     return result;
 }
@@ -601,8 +757,7 @@ big_int *big_int_mod_pow(const big_int *n, const big_int *y, const big_int *m)
     unsigned char mask = 1;
     for (int i = y->length - 1; i >= 0; i--)
     {
-        mask = 1;
-        for (short j = 0; j < 8; j++)
+        for (mask = 1; mask; mask <<= 1)
         {
             if (y->number[i] & mask)
             {
@@ -613,7 +768,7 @@ big_int *big_int_mod_pow(const big_int *n, const big_int *y, const big_int *m)
                 ans = big_int_mod(ans, m);
                 big_int_free(temp);
             }
-            mask <<= 1;
+            //mask <<= 1;
             temp = x;
             x = big_int_multiply(x, x);
             big_int_free(temp);
@@ -656,23 +811,27 @@ void big_int_reminder_division(const big_int *divident, const big_int *divisor, 
         {
             left_shift(subt, diff);
             left_shift(temp2, diff);
+            qDigit = n->number[0] / divisor->number[0];
         }
         else
         {
             left_shift(subt, diff - 1);
             left_shift(temp2, diff - 1);
+            qDigit = (n->number[0] * BASE + n->number[1]) / divisor->number[0];
         }
         subt2 = big_int_assign(subt);
-        while (big_int_is_greater_or_equal(n, subt))
+        big_int *qDigitBig = get_big_int_10("1", 1);
+        qDigitBig->number[0] = qDigit;
+        temp = subt;
+        subt = big_int_multiply(subt, qDigitBig);
+        big_int_free(temp);
+        while (big_int_is_greater(subt, n))
         {
             temp = subt;
-            subt = big_int_add(subt, subt2);
+            subt = big_int_sub_positive(subt, subt2);
             big_int_free(temp);
-            ++qDigit;
+            --qDigit;
         }
-        temp = subt;
-        subt = big_int_sub_positive(subt, subt2);
-        big_int_free(temp);
         big_int_free(subt2);
 
         temp = quotient;
@@ -691,6 +850,108 @@ void big_int_reminder_division(const big_int *divident, const big_int *divisor, 
     result[1] = n;
 }
 
+
+/*  MATRIX AND OPERATIONS  */
+
+void print_matrix_2x2(big_int **matrix);
+
+void print_big_int_10(const big_int *n);
+
+big_int **big_int_create_matrix_2x2(int *k)
+{
+    big_int **matrix = (big_int **)malloc(4 * sizeof(big_int *));
+    for (int i = 0; i < 4; i++)
+    {
+        matrix[i] = get_big_int_10("1", 1);
+        matrix[i]->number[0] = (unsigned char)k[i];
+    }
+    return matrix;
+}
+
+big_int **big_int_multiply_matrix(big_int * const *matrix1, big_int * const *matrix2)
+{
+    big_int **matrixTemp = malloc(4 * sizeof(big_int *));
+    big_int *temp;
+    matrixTemp[0] = big_int_add_f(big_int_multiply(matrix1[0], matrix2[0]), big_int_multiply(matrix1[1], matrix2[2]));
+    matrixTemp[1] = big_int_add_f(big_int_multiply(matrix1[0], matrix2[1]), big_int_multiply(matrix1[1], matrix2[3]));
+    matrixTemp[2] = big_int_add_f(big_int_multiply(matrix1[2], matrix2[0]), big_int_multiply(matrix1[3], matrix2[2]));
+    matrixTemp[3] = big_int_add_f(big_int_multiply(matrix1[2], matrix2[1]), big_int_multiply(matrix1[3], matrix2[3]));
+    return matrixTemp;
+}
+
+void **big_int_matrix_free(big_int **m)
+{
+    for (int i = 0; i < 4; i++)
+        big_int_free(m[i]);
+    free(m);
+}
+
+void big_int_euclid_extended(const big_int* a_in, const big_int* b_in, big_int* *x, big_int* *y)
+{
+    big_int *a = big_int_assign(a_in);
+    big_int *b = big_int_assign(b_in);
+
+    int k1[] = {1, 0, 0, 1};
+    int k2[] = {0, 1, 1, 0};
+    big_int **matrix_a = big_int_create_matrix_2x2(k1);
+    big_int **matrix_b = big_int_create_matrix_2x2(k2);
+    big_int *rem_div[2];
+    big_int **bin;
+    int i = 1;
+
+    while (!big_int_is_zero(a) && !big_int_is_zero(b))
+    {
+        if (big_int_is_greater(a, b))
+        {
+            big_int_reminder_division(a, b, rem_div);
+            big_int_free(matrix_b[0]);
+            matrix_b[0] = big_int_assign(rem_div[0]);
+            big_int_free(a);
+            a = big_int_assign(rem_div[1]);
+        }
+        else
+        {
+            big_int_reminder_division(b, a, rem_div);
+            big_int_free(matrix_b[0]);
+            matrix_b[0] = big_int_assign(rem_div[0]);
+            big_int_free(b);
+            b = big_int_assign(rem_div[1]);
+        }
+
+        print_big_int_10(a);
+        print_big_int_10(b);
+        printf("%s", "___\n");
+
+        bin = matrix_a;
+        matrix_a = big_int_multiply_matrix(matrix_a, matrix_b);
+        big_int_matrix_free(bin);
+
+        print_matrix_2x2(matrix_a);
+        print_matrix_2x2(matrix_b);
+        printf("%s", "____===\n");
+
+        i = 1 - i;
+    }
+    if (big_int_is_greater_or_equal(a_in, b_in))
+    {
+        *x = big_int_assign(matrix_a[3]);
+        *y = big_int_assign(matrix_a[1]);
+        (*y)->sign ^= i;
+        (*x)->sign ^= 1 - i;
+    }
+    else
+    {
+        *x = big_int_assign(matrix_a[1]);
+        *y = big_int_assign(matrix_a[3]);
+        (*y)->sign ^= 1 - i;
+        (*x)->sign ^= i;
+    }
+
+    big_int_matrix_free(matrix_a);
+    big_int_matrix_free(matrix_b);
+    
+    return;
+}
 
 /*  Output block functions  */
 
@@ -718,6 +979,14 @@ void print_big_int_10(const big_int *n)
     printf("\n");
 }
 
+void print_matrix_2x2(big_int **matrix)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        printf("%d)", i);
+        print_big_int_10(matrix[i]);
+    }
+}
 
 /*  Testing block functions  */
 
@@ -809,45 +1078,88 @@ void test_rshift()
 
 void test_mod_pow()
 {
-    big_int *x = get_big_int_10("3", 1);
-    big_int *y = get_big_int_10("5000", 1);
-    big_int *m = get_big_int_10("1000000000", 1);
-    x = get_big_int_10("65614564543443", 1);
-    y = get_big_int_10("8767687235467867621377", 1);
-    m = get_big_int_10("319797212497321917", 1);
+    // big_int *x = get_big_int_10("3", 1);
+    // big_int *y = get_big_int_10("5000", 1);
+    // big_int *m = get_big_int_10("1000000000", 1);
+    // x = get_big_int_10("65614564543443", 1);
+    // y = get_big_int_10("8767687235467867621377", 1);
+    // m = get_big_int_10("319797212497321917", 1);
+    big_int *x = get_big_int_10("5", 1);
+    big_int *y = get_big_int_10("32416188697", 1);
+    big_int *m = get_big_int_10("32416188697", 1);
+    
     big_int *res = big_int_mod_pow(x, y, m);
     print_big_int_10(res);
-    
 }
 
 void test_reminder_division()
 {
     //big_int *divident = get_big_int_10("1456561514575545365217216154162387163214287671216235163821677193278192371324132618391", 1);
-    //big_int *x = get_big_int_10("97654321462381623183", 1);
+    big_int *ans[2];
+    // big_int *x = get_big_int_10("97654321462381623183", 1);
+    // big_int *sq_x = big_int_multiply(x,x);
+    // big_int_reminder_division(sq_x, x, ans);
+    // big_int_free(x);
+    // print_big_int_10(ans[0]);
+    // print_big_int_10(ans[1]);
+
+    //big_int *divisor = get_big_int_10("97654321462381623183", 1);
+    
     big_int *x = get_big_int("111111111111111111111", 1);
     big_int *y = get_big_int("1111111", 1);
-    //big_int *sq_x = big_int_multiply(x,x);
-    //big_int_free(x);
-    //big_int *divisor = get_big_int_10("97654321462381623183", 1);
-    big_int *ans[2];
     big_int_reminder_division(x, y, ans);
     print_big_int_2(ans[0]);
     print_big_int_10(ans[1]);
 
 }
 
-int main()
+void test_lshift_2()
 {
-    //test();
-    //test_10();
-    //test_add_bin();
-    //test_multiply();
-    //test_pow();
-    //test_assign();
-    //test_mod();
-    //test_rshift();
-    //test_mod_pow();
-    test_reminder_division();
-
-    return 0;
+    big_int *x = get_big_int("1000100100", 1);
+    left_shift_2(x);
+    print_big_int_2(x);
 }
+
+void matrix_test()
+{
+    // const big_int **matrix1 = malloc(4);
+    // for (int i = 0; i < 4; i++)
+    //     matrix1[i] = get_big_int_10("1", 1);
+    int k1[4] = {12, 3, 5, 9};
+    int k2[4] = {1, 0, 0, 1};
+    big_int **matrix1 = big_int_create_matrix_2x2(k1);
+    big_int **matrix2 = big_int_create_matrix_2x2(k2);
+    big_int **matrixRes = big_int_multiply_matrix(matrix1, matrix2);
+    print_matrix_2x2(matrixRes);
+}
+
+void euclid_test()
+{
+    big_int *x;
+    big_int *y;
+    big_int *a = get_big_int_10("1215447", 1);
+    big_int *b = get_big_int_10("17267674", 1);
+    big_int_euclid_extended(a, b, &x, &y);
+    printf("ans:");
+    print_big_int_10(x);
+    print_big_int_10(y);
+}
+
+// int main()
+// {
+//     //test();
+//     //test_10();
+//     //test_add_bin();
+//     //test_multiply();
+//     //test_pow();
+//     //test_assign();
+//     //test_mod();
+//     //test_rshift();
+//     //test_mod_pow();
+//     //test_reminder_division();
+//     //test_lshift_2();
+//     //matrix_test();
+//     euclid_test();
+
+//     return 0;
+// }
