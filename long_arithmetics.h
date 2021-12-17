@@ -79,6 +79,8 @@ big_int *big_int_pow(const big_int *n, int r);
 
 big_int *big_int_mod(const big_int *divident, const big_int *modul);
 
+big_int *big_int_div(const big_int *divident, const big_int *divisor);
+
 big_int *big_int_mod_pow(const big_int *n, const big_int *y, const big_int *m);
 
 void big_int_reminder_division(const big_int *divident, const big_int *divisor, big_int *(*result));
@@ -94,6 +96,7 @@ void **big_int_matrix_free(big_int **m);
 
 void big_int_euclid_extended(const big_int* a_in, const big_int* b_in, big_int* *x, big_int* *y);
 
+big_int *big_int_mul_inv(const big_int *a, const big_int *p);
 
 /*  Output block functions  */
 
