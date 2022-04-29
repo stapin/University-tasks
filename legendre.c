@@ -61,31 +61,31 @@ short legendre_symbol2(ull q, ull p)
     return ans;
 }
 
-void time_diff()
-{
-    ull a = 2429648;
-    ull p = 99999539;
-    //scanf("%d", &a);
-    int ans1, ans2;
-    clock_t time1, time2;
+// void time_diff()
+// {
+//     ull a = 2429648;
+//     ull p = 99999539;
+//     //scanf("%d", &a);
+//     int ans1, ans2;
+//     clock_t time1, time2;
 
-    time1 = clock();
-    for (int i = 0; i < 10000000; i++)
-    {
-        ans1 = legendre_symbol(a, p);
-    }
-    time2 = clock();
-    printf("time1 = %li\nans1 = %d\n", (time2 - time1), ans1);
+//     time1 = clock();
+//     for (int i = 0; i < 10000000; i++)
+//     {
+//         ans1 = legendre_symbol(a, p);
+//     }
+//     time2 = clock();
+//     printf("time1 = %li\nans1 = %d\n", (time2 - time1), ans1);
 
-    time1 = clock();
-    for (int i = 0; i < 10000000; i++)
-    {
-        ans2 = legendre_symbol2(a, p);
-    }
-    time2 = clock();
-    printf("time2 = %li\nans2 = %d\n", (time2 - time1), ans2);
+//     time1 = clock();
+//     for (int i = 0; i < 10000000; i++)
+//     {
+//         ans2 = legendre_symbol2(a, p);
+//     }
+//     time2 = clock();
+//     printf("time2 = %li\nans2 = %d\n", (time2 - time1), ans2);
 
-}
+// }
 
 int pow2(int a, int b)
 {
@@ -147,33 +147,34 @@ int sqrt_mod(int a, int p)
     return mod(mod_pow(a, (h + 1) >> 1, p) * (ull)mod_pow(notRes, rb >> 1, p), p);
 }
 
-void test()
-{
-    int p = 13;
-    for (int i = 0; i < (p + 1) / 2; i++)
-    {
-        printf("%d %d %d\n", i, legendre_symbol2(i, p), mod(i * i, p));
-    }
-    printf("%d\n", mod_pow(3, 7, p));
-    printf("%d", sqrt_mod(2, 129));
-}
+// void test()
+// {
+//     int p = 13;
+//     for (int i = 0; i < (p + 1) / 2; i++)
+//     {
+//         printf("%d %d %d\n", i, legendre_symbol2(i, p), mod(i * i, p));
+//     }
+//     printf("%d\n", mod_pow(3, 7, p));
+//     printf("%d", sqrt_mod(2, 129));
+// }
 
-void test_sqrt(int p, int m)
-{
-    int ans = sqrt_mod(p, m);
-    int res = mod_pow(ans, 2, m) == p ? 1: 0;
-    printf("%d %d\n", res, ans);
-}
+// void test_sqrt(int p, int m)
+// {
+//     int ans = sqrt_mod(p, m);
+//     int res = mod_pow(ans, 2, m) == p ? 1: 0;
+//     printf("%d %d\n", res, ans);
+// }
 
-int main()
-{
-    test_sqrt(103, 1789);
-    test_sqrt(108, 24481);
-    test_sqrt(7, 1789);
-    test_sqrt(7, 131071);
-    test_sqrt(5, 25799);
-    test_sqrt(7, 99929);
-    test_sqrt(161, 157457);
+// int main()
+// {
+//     test_sqrt(103, 1789);
+//     test_sqrt(108, 24481);
+//     test_sqrt(7, 1789);
+//     test_sqrt(7, 131071);
+//     test_sqrt(5, 25799);
+//     test_sqrt(7, 99929);
+//     test_sqrt(161, 157457);
     
-    return 0;
-}
+//     return 0;
+// }
+
