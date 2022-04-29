@@ -36,15 +36,15 @@ int sqrt_p(int num, int prime, int length)
     printf("%d\n", root);
     char buffer[10];
     //_itoa_s(root, buffer, 10, 10);
-    //itoa(root, buffer, 10);
+    itoa(root, buffer, 10);
     big_int *x0 = get_big_int_10(buffer, 1);
 
     //_itoa_s(num, buffer, 10, 10);
-    //itoa(num, buffer, 10);
+    itoa(num, buffer, 10);
     big_int *a = get_big_int_10(buffer, 1);
 
     //_itoa_s(prime, buffer, 10, 10);
-    //itoa(prime, buffer, 10);
+    itoa(prime, buffer, 10);
     big_int *p = get_big_int_10(buffer, 1);
     
 
